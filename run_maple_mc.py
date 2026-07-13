@@ -114,6 +114,7 @@ def attempt_swap(spins_list : list[np.ndarray], energies : list[float], temps : 
 def run_pt(bonds : np.ndarray, neighbors : np.ndarray, temps : list[float], J : float, n_therm : int, n_meas : int, sweeps_per_exchange : int) -> dict:
     nbonds = len(bonds)
     nrep = len(temps)
+    N = neighbors.shape[0] # define number of spins
     spins_list = [np.where(np.random.random(N) < 0.5, -1, 1).astype(np.int8) for _ in range(nrep)]
     energies = [total_energy(s, bonds, J) for s in spins_list]
 
