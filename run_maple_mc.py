@@ -52,11 +52,15 @@ def maple_leaf_lattice_pbc(nx : int, ny : int) -> tuple[np.ndarray, list[tuple[i
 
 """create a list of neighbors using given bonds, allows faster lookup"""
 def build_neighbors(N : int, bonds : list[tuple[int, int]]) -> list[list[int]]:
-    # Can switch to fixed length array rather than object array for better performance
-    nbrs = [[] for _ in range(N)]
+    # switch to fixed length array rather than object array for better performance
+    deg = 6  # max degree of a site in the maple leaf lattice
+    nbrs = -np.ones((N, deg), dtype=np.int32)
+    counts = np.zeros(N, dtype=np.int32)
     for i, j in bonds:
-        nbrs[i].append(j)
-        nbrs[j].append(i)
+        nbrs[i, counts[i]] = j
+        counts[i] += 1
+        nbrs[j, counts[j]] = i
+        counts[j] += 1
     return nbrs
 
 """loop over all bonds to calculate total Ising energy"""
@@ -74,7 +78,9 @@ def total_energy(spins : np.ndarray, bonds : np.ndarray, J : float) -> float:
 def delta_energy(i : int, spins : np.ndarray, neighbors : np.ndarray, J : float) -> float:
     s = 0
     for k in range(neighbors.shape[1]):
-        s += spins[neighbors[i, k]]
+        j = neighbors[i, k]
+        if j != -1:
+            s += spins[j]
     return 2.0 * J * spins[i] * s
 
 """attempt n random spin flips (on average one per spin), then compute the energy change of a random site and decide it can be flipped"""
