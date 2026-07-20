@@ -4,7 +4,7 @@ from pathlib import Path
 import torch
 
 # Print which device is available
-device = torch.device("CUDA" if torch.cuda.is_available() else "CPU")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Using device:", device)
 
 # Construct maple leaf lattice
