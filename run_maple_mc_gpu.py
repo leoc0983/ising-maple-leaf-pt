@@ -18,6 +18,7 @@ def maple_leaf_lattice_pbc(nx: int, ny: int):
         [-1, 2]
     ])
 
+    # Remove certain sites to build maple structure
     Rinv = np.linalg.inv(R)
     sites = []
     coords = []
@@ -45,6 +46,7 @@ def maple_leaf_lattice_pbc(nx: int, ny: int):
         (1,-1)
     ]
 
+    # Build set of bonds where spins interact
     bonds=set()
 
     for i,(m,n) in enumerate(coords):
@@ -84,6 +86,7 @@ def build_neighbors(N, bonds):
         dtype=np.int64
     )
 
+    # Convert bonds set into list for easier access
     for i,j in bonds:
         neighbors[i,counts[i]] = j
         counts[i]+=1
@@ -94,6 +97,9 @@ def build_neighbors(N, bonds):
     return neighbors
 
 # Color graph with greedy algorithm
+# The idea is to ensure that bonds of the same color cannot interact
+# Thus, we can safely update multiple spins at the same time
+# No two interacting spins can be updated at the same time, eliminate race condition
 def color_lattice(N, bonds):
 
     adjacency=[set() for _ in range(N)]
@@ -156,6 +162,7 @@ def total_energy_gpu(spins, bonds, J):
     return -J * interaction.sum(dim=1)
 
 # GPU color Metropolis update
+# Compute energy change of spins accounting for probability
 @torch.no_grad()
 def metropolis_color_update(
     spins,
@@ -241,6 +248,7 @@ def metropolis_color_update(
     spins[:, sites] = new_values
 
 # One full GPU Monte Carlo sweep
+# Update all spins of the given color
 @torch.no_grad()
 def mc_sweep_gpu(
     spins,
@@ -259,6 +267,7 @@ def mc_sweep_gpu(
         )
 
 # Parallel tempering swap
+# Swaps configurations between colors
 def attempt_swap(
     spins,
     energies,
@@ -453,6 +462,7 @@ def run_pt_gpu(
     }
 
 # Main
+# We want randomness to avoid being stuck at a local min energy state
 def main():
     # Parse inputs and gather data
     parser = argparse.ArgumentParser()
